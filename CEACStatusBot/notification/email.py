@@ -21,16 +21,56 @@ class EmailNotificationHandle(NotificationHandle):
 
     def send(self,result):
         
-        # {'success': True, 'visa_type': 'NONIMMIGRANT VISA APPLICATION', 'status': 'Issued', 'case_created': '30-Aug-2022', 'case_last_updated': '19-Oct-2022', 'description': 'Your visa is in final processing. If you have not received it in more than 10 working days, please see the webpage for contact information of the embassy or consulate where you submitted your application.', 'application_num': '***'}
-
         mail_title = '[CEACStatusBot] {} : {}'.format(result["application_num_origin"],result['status'])
-        mail_content = str(result)
+        
+        # Create a more readable HTML layout
+        mail_content_html = f"""
+        <html>
+        <head>
+        <style>
+            body {{ font-family: sans-serif; }}
+            table {{ border-collapse: collapse; width: 100%; }}
+            th, td {{ border: 1px solid #dddddd; text-align: left; padding: 8px; }}
+            th {{ background-color: #f2f2f2; }}
+        </style>
+        </head>
+        <body>
+        <h2>CEAC Visa Status Notification</h2>
+        <table>
+            <tr>
+                <th>Application Number</th>
+                <td>{result.get('application_num_origin', 'N/A')}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td><strong>{result.get('status', 'N/A')}</strong></td>
+            </tr>
+            <tr>
+                <th>Visa Type</th>
+                <td>{result.get('visa_type', 'N/A')}</td>
+            </tr>
+            <tr>
+                <th>Case Created</th>
+                <td>{result.get('case_created', 'N/A')}</td>
+            </tr>
+            <tr>
+                <th>Case Last Updated</th>
+                <td>{result.get('case_last_updated', 'N/A')}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{result.get('description', 'N/A')}</td>
+            </tr>
+        </table>
+        </body>
+        </html>
+        """
 
         msg = MIMEMultipart()
         msg["Subject"] = Header(mail_title,'utf-8')
         msg["From"] = self.__fromEmail
         msg['To'] = ";".join(self.__toEmail)
-        msg.attach(MIMEText(mail_content,'plain','utf-8'))
+        msg.attach(MIMEText(mail_content_html,'html','utf-8'))
 
         smtp = SMTP_SSL(self.__hostAddress, self.__hostPort) # ssl登录
         print(smtp.login(self.__fromEmail,self.__emailPassword))
